@@ -1,0 +1,27 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Motion Reel Remake</title>
+<link rel="stylesheet" href="fonts/local.css">
+<style>html,body{margin:0;background:#000}canvas{display:block;width:100vw;max-width:1920px}</style></head>
+<body><canvas id="c" width="1920" height="1080"></canvas>
+<script src="lib.js"></script><script src="scenes.js"></script>
+<script>
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const off = document.createElement('canvas'); off.width = W; off.height = H; const og = off.getContext('2d');
+const qs = new URLSearchParams(location.search), SUB = +(qs.get('mb') || 10);   // 运动模糊子帧数
+const sceneAt = t => SCENES.find(([a, b]) => t >= bt(a) && t < bt(b)) || SCENES[SCENES.length - 1];
+function drawScene(g, t) { const s = sceneAt(t); g.save(); s[2](g, t); g.restore(); }
+function renderFrame(t) {
+  const s = sceneAt(t), end = bt(s[1]) - 1e-4, shutter = 0.5 / FPS;     // 180° 快门；子帧不跨越剪辑点
+  if (SUB <= 1) drawScene(ctx, t);
+  else for (let i = 0; i < SUB; i++) { drawScene(og, Math.min(end, t + i / SUB * shutter)); ctx.globalAlpha = 1 / (i + 1); ctx.drawImage(off, 0, 0); } // 递推平均
+  ctx.globalAlpha = 1;
+  const b = t / B, gk = GLITCH.find(([a, c]) => b >= a && b < c); if (gk) glitch(ctx, gk[2] * (0.5 + 0.5 * Math.sin(b * 40)), Math.floor(t * FPS));
+  const frame = Math.round(t * FPS); grainVignette(ctx, frame, 0.35);
+  const ch = CHAPTERS.find(([a, c]) => b >= a && b < c) || CHAPTERS[7];
+  hud(ctx, t, { num: ch[2], name: ch[3], dot: ch[4], prog: seg(b, ch[0], ch[1]), credit: seg(b, 30.5, 31.2) });
+}
+Promise.all(['"Archivo Black"', '"Anton"', '500 20px "JetBrains Mono"'].map(f => document.fonts.load(f.includes('px') ? f : `40px ${f}`))).then(() => {
+  window.__scene = { duration: DURATION, fps: FPS, renderFrame };
+  if (qs.has('t')) renderFrame(parseFloat(qs.get('t')));
+  else if (!qs.has('capture')) { const s0 = performance.now(); (function loop() { renderFrame(((performance.now() - s0) / 1000) % DURATION); requestAnimationFrame(loop); })(); }
+});
+</script></body></html>

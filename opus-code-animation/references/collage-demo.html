@@ -1,0 +1,71 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Collage demo</title>
+<style>html,body{margin:0;background:#111}canvas{display:block;width:100vw;max-width:1920px}</style></head>
+<body><canvas id="c" width="1920" height="1080"></canvas>
+<script src="collage-kit.js"></script>
+<script>
+const W = 1920, H = 1080, DURATION = 5, FPS = 24;
+const C = window.Collage, ctx = document.getElementById('c').getContext('2d');
+const INK = '#3b2a20';
+const tex = C.paperTexture(512, 7);
+
+// ---------- 预渲染素材（只做一次） ----------
+const sky = C.mk(W, H); { const g = sky.getContext('2d'); const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#1d2350'); gr.addColorStop(1, '#3a3f78'); g.fillStyle = gr; g.fillRect(0, 0, W, H); g.beginPath(); g.rect(0, 0, W, H); C.texturize(g, tex, 0.5); }
+const strips = [
+  { c: C.tornStrip({ w: W + 200, h: 500, color: '#2b3270', seed: 11, tex }), y: 120, depth: 0.2 },
+  { c: C.tornStrip({ w: W + 200, h: 500, color: '#34407f', seed: 12, tex, rough: 1.4 }), y: 420, depth: 0.4 },
+  { c: C.tornStrip({ w: W + 200, h: 400, color: '#e9d7b0', seed: 13, tex, rough: 0.8 }), y: 690, depth: 0.7 },   // 桌面/地面纸
+  { c: C.tornStrip({ w: W + 200, h: 300, color: '#c9a877', seed: 14, tex }), y: 860, depth: 0.9 },
+];
+function moon() { const c = C.mk(360, 360), g = c.getContext('2d');
+  C.crayonFill(g, g => { g.beginPath(); g.arc(180, 180, 140, 0, 7); }, '#f1e3bd', '#caa76a', { seed: 5, w: 360, h: 360 });
+  const r = C.mulberry32(8); for (let i = 0; i < 14; i++) { g.fillStyle = `rgba(190,150,90,${0.15 + r() * 0.2})`; g.beginPath(); g.arc(90 + r() * 180, 90 + r() * 180, 8 + r() * 26, 0, 7); g.fill(); }
+  g.beginPath(); g.arc(180, 180, 140, 0, 7); C.texturize(g, tex, 0.6); return C.stickerize(c, 7, 10); }
+function xiaobai() { const c = C.mk(420, 420), g = c.getContext('2d');
+  const body = g => { g.beginPath(); g.roundRect(60, 110, 300, 230, 60); };
+  g.strokeStyle = INK; g.lineWidth = 16; g.lineCap = 'round'; g.beginPath(); g.moveTo(150, 330); g.lineTo(150, 395); g.moveTo(270, 330); g.lineTo(270, 395); g.stroke();
+  g.lineWidth = 9; g.beginPath(); g.moveTo(210, 112); g.lineTo(210, 50); g.stroke();
+  C.crayonFill(g, g => { g.beginPath(); g.roundRect(180, 12, 60, 44, 12); }, '#6cc47c', '#3f8a4c', { seed: 2, w: 420, h: 420 });
+  C.crayonFill(g, body, '#fbf4e4', '#d9c7a4', { seed: 3, w: 420, h: 420 });
+  body(g); g.lineWidth = 9; g.strokeStyle = INK; g.stroke();
+  const face = g => { g.beginPath(); g.roundRect(100, 145, 220, 150, 36); };
+  C.crayonFill(g, face, '#d9efd9', '#9cc9a0', { seed: 4, w: 420, h: 420 }); face(g); g.lineWidth = 6; g.stroke();
+  g.fillStyle = INK; [170, 250].forEach(x => { g.beginPath(); g.ellipse(x, 208, 14, 19, 0, 0, 7); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(x + 5, 200, 5.5, 0, 7); g.fill(); g.fillStyle = INK; });
+  g.fillStyle = 'rgba(240,140,150,0.6)'; [135, 285].forEach(x => { g.beginPath(); g.ellipse(x, 245, 18, 11, 0, 0, 7); g.fill(); });
+  g.lineWidth = 6; g.beginPath(); g.arc(210, 238, 16, 0.25, Math.PI - 0.25); g.stroke();
+  return C.stickerize(c, 12, 18); }
+function phone() { const c = C.mk(380, 640), g = c.getContext('2d');
+  C.crayonFill(g, g => { g.beginPath(); g.roundRect(10, 10, 360, 620, 50); }, '#3c3531', '#221c19', { seed: 21, w: 380, h: 640 });
+  C.crayonFill(g, g => { g.beginPath(); g.roundRect(30, 40, 320, 560, 30); }, '#f4efe4', '#d8cdb8', { seed: 22, w: 380, h: 640 });
+  const bub = (x, y, w, col) => { C.crayonFill(g, g => { g.beginPath(); g.roundRect(x, y, w, 54, 16); }, col, 'rgba(0,0,0,0.25)', { seed: y, w: 380, h: 640, density: 0.4 }); g.lineWidth = 3; g.strokeStyle = INK; g.beginPath(); g.roundRect(x, y, w, 54, 16); g.stroke(); };
+  bub(50, 360, 170, '#fffaf0'); bub(50, 430, 230, '#fffaf0'); bub(130, 500, 200, '#a8e08a');
+  g.font = '600 26px "PingFang SC"'; g.fillStyle = INK; g.fillText('在吗？', 70, 396); g.fillText('介绍一下你自己', 70, 466); g.fillText('我在～我是小白', 150, 536);
+  g.font = '700 28px "PingFang SC"'; g.textAlign = 'center'; g.fillText('测试好友', 190, 90);
+  return C.stickerize(c, 9, 16); }
+const MOON = moon(), XB = xiaobai(), PHONE = phone();
+const layer = C.mk(W, H), L = layer.getContext('2d');
+
+const CAM = [{ t: 0, x: 960, y: 540, zoom: 1.0 }, { t: 2.9, x: 980, y: 560, zoom: 1.08 },   // 镜头 1：缓推
+             { t: 3.0, x: 1000, y: 600, zoom: 2.1 }, { t: 5, x: 1000, y: 590, zoom: 2.25 }];  // 镜头 2：硬切特写 + 缓推
+function renderFrame(t) {
+  const cam = C.camera(CAM, t), close = t >= 3.0, focus = 0.95, maxBlur = close ? 16 : 3;  // 远景几乎全清晰，特写才开大景深
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(sky, 0, 0);
+  // 每一层：清空离屏层 → 按视差画进去 → 按景深模糊贴回主画布
+  const par = d => ({ x: (cam.x - 960) * d, y: (cam.y - 540) * d, z: 1 + (cam.zoom - 1) * d });
+  const drawLayer = (depth, fn) => { L.setTransform(1, 0, 0, 1, 0, 0); L.clearRect(0, 0, W, H); const p = par(depth);
+    L.translate(W / 2, H / 2); L.scale(p.z, p.z); L.translate(-W / 2 - p.x, -H / 2 - p.y); fn(L); C.drawLayerDOF(ctx, layer, depth, focus, maxBlur); };
+  drawLayer(0.2, g => g.drawImage(strips[0].c, -140, strips[0].y - 40));   // 最远的天空纸条在月亮之后
+  drawLayer(0.1, g => { const bob = Math.sin(t * 0.8) * 6; C.glow(g, 1480, 330 + bob, 460); g.drawImage(MOON, 1480 - MOON.width / 2, 330 + bob - MOON.height / 2); });
+  strips.slice(1).forEach((s, i) => drawLayer(s.depth, g => g.drawImage(s.c, -100 - 40 + Math.sin(t * 0.3 + i) * 8, s.y - 40)));
+  if (close) drawLayer(0.5, g => C.bokeh(g, W, H, 4, t, { n: 18 }));
+  drawLayer(0.95, g => {
+    g.drawImage(PHONE, 330 - PHONE.pad, 330 - PHONE.pad + Math.sin(t * 2) * 4);
+    const hop = Math.abs(Math.sin(t * Math.PI * 2)) * 18, sq = 1 - 0.06 * Math.max(0, Math.cos(t * Math.PI * 2 * 2));
+    g.save(); g.translate(1000, 880 - hop); g.scale(2 - sq, sq); g.drawImage(XB, -XB.width / 2, -XB.height + XB.pad); g.restore();
+  });
+  C.finish(ctx, W, H, t, { fps: FPS });
+}
+window.__scene = { duration: DURATION, fps: FPS, renderFrame };
+const qs = new URLSearchParams(location.search);
+if (qs.has('t')) renderFrame(parseFloat(qs.get('t')));
+else if (!qs.has('capture')) { const s = performance.now(); (function loop() { renderFrame(((performance.now() - s) / 1000) % DURATION); requestAnimationFrame(loop); })(); }
+</script></body></html>
